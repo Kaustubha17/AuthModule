@@ -1,3 +1,5 @@
+require('dotenv').config()
+
 const express = require('express')
 const ejs = require('ejs')
 const mongoose = require("mongoose")
@@ -19,7 +21,8 @@ const userScehma = new mongoose.Schema({
 })
 
 const secret = "abcd"
-userScehma.plugin(encrypt, { secret: secret, encryptedFields: ["password"] });
+// console.log(process.env)
+userScehma.plugin(encrypt, { secret: process.env.SECRET, encryptedFields: ["password"] });
 const User = new mongoose.model("User", userScehma)
 app.get("/", (req, res) => {
     res.render("home")
@@ -63,9 +66,10 @@ app.post("/login", (req, res) => {
         if (foundUser) {
             if (foundUser.password === password)
                 res.render("secrets");
-            else {
-                res.render("register")
-            }
+
+        }
+        else {
+            res.render("register")
         }
     })
 
