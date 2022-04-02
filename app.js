@@ -5,7 +5,9 @@ const ejs = require('ejs')
 const mongoose = require("mongoose")
 const bodyParser = require('body-parser')
 const app = express()
-const encrypt = require("mongoose-encryption")
+const md5 = require("md5")
+// const encrypt = require("mongoose-encryption")
+
 app.set('view engine', 'ejs')
 app.listen(3000, () => {
     console.log("Server listening at port 3000")
@@ -22,7 +24,7 @@ const userScehma = new mongoose.Schema({
 
 const secret = "abcd"
 // console.log(process.env)
-userScehma.plugin(encrypt, { secret: process.env.SECRET, encryptedFields: ["password"] });
+// userScehma.plugin(encrypt, { secret: process.env.SECRET, encryptedFields: ["password"] });
 const User = new mongoose.model("User", userScehma)
 app.get("/", (req, res) => {
     res.render("home")
@@ -38,10 +40,10 @@ app.get("/register", (req, res) => {
 
 app.post("/register", (req, res) => {
 
-    console.log(req.body)
+
     const newUser = new User({
         email: req.body.username,
-        password: req.body.password
+        password: md5(req.body.password)
     })
 
     newUser.save((err) => {
@@ -58,7 +60,7 @@ app.post("/register", (req, res) => {
 
 app.post("/login", (req, res) => {
     const userName = req.body.username;
-    const password = req.body.password
+    const password = md5(req.body.password)
     User.findOne({ email: userName }, (err, foundUser) => {
         if (err) {
             console.log(err)
@@ -66,7 +68,8 @@ app.post("/login", (req, res) => {
         if (foundUser) {
             if (foundUser.password === password)
                 res.render("secrets");
-
+            else
+                res.send("Incorrect password")
         }
         else {
             res.render("register")
