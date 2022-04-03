@@ -5,9 +5,10 @@ const ejs = require('ejs')
 const mongoose = require("mongoose")
 const bodyParser = require('body-parser')
 const app = express()
-const md5 = require("md5")
+// const md5 = require("md5")
 // const encrypt = require("mongoose-encryption")
-
+const bcrypt = require("bcrypt")
+const saltRounds = 10;
 app.set('view engine', 'ejs')
 app.listen(3000, () => {
     console.log("Server listening at port 3000")
@@ -39,40 +40,44 @@ app.get("/register", (req, res) => {
 })
 
 app.post("/register", (req, res) => {
+    bcrypt.hash(req.body.password, saltRounds, function (err, hash) {
+        const newUser = new User({
+            email: req.body.username,
+            password: hash
+        })
 
+        newUser.save((err) => {
+            if (err) {
+                console.log(err);
+            }
+            else {
+                res.render("secrets");
+            }
 
-    const newUser = new User({
-        email: req.body.username,
-        password: md5(req.body.password)
-    })
-
-    newUser.save((err) => {
-        if (err) {
-            console.log(err);
-        }
-        else {
-            res.render("secrets");
-        }
-
+        });
     });
+
+
 })
 
 
 app.post("/login", (req, res) => {
     const userName = req.body.username;
-    const password = md5(req.body.password)
+    const password = req.body.password.toString();
+
     User.findOne({ email: userName }, (err, foundUser) => {
+
         if (err) {
             console.log(err)
-        }
-        if (foundUser) {
-            if (foundUser.password === password)
-                res.render("secrets");
-            else
-                res.send("Incorrect password")
-        }
-        else {
-            res.render("register")
+        } else {
+            if (foundUser) {
+                // console.log(bcrypt.compareSync(password, foundUser.password))
+                if (bcrypt.compareSync(password, foundUser.password)) {
+
+                    res.render("secrets");
+                }
+
+            }
         }
     })
 
